@@ -1,5 +1,5 @@
 module NestedForm
-  class Builder < ::ActionView::Helpers::FormBuilder
+  module BuilderMixin
     # Adds a link to insert a new associated records. The first argument is the name of the link, the second is the name of the association.
     #
     #   f.link_to_add("Add Task", :tasks)
@@ -48,12 +48,12 @@ module NestedForm
       hidden_field(:_destroy) + @template.link_to(*args, &block)
     end
 
-    def fields_for_with_nested_attributes(association_name, args, block)
+    def fields_for_with_nested_attributes(association_name, *args)
       # TODO Test this better
-      block ||= Proc.new { |fields| @template.render(:partial => "#{association_name.to_s.singularize}_fields", :locals => {:f => fields}) }
+      block = args.pop || Proc.new { |fields| @template.render(:partial => "#{association_name.to_s.singularize}_fields", :locals => {:f => fields}) }
       @fields ||= {}
       @fields[association_name] = block
-      super(association_name, args, block)
+      super(association_name, *(args << block))
     end
 
     def fields_for_nested_model(name, object, options, block)

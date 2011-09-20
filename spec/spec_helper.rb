@@ -1,56 +1,16 @@
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-$LOAD_PATH.unshift(File.dirname(__FILE__))
-require "bundler/setup"
-Bundler.require(:default)
+# Configure Rails Environment
+ENV["RAILS_ENV"] = "test"
 
-require "rails"
-require "nested_form"
-
-# a fake app for initializing the railtie
-app = Class.new(Rails::Application)
-app.config.secret_token = "token"
-app.config.session_store :cookie_store, :key => "_myapp_session"
-app.config.active_support.deprecation = :log
-app.initialize!
-
-require 'action_controller'
-require 'active_record'
+require File.expand_path("../dummy/config/environment.rb",  __FILE__)
 require 'rspec/rails'
+require 'capybara/rspec'
 
+Capybara.javascript_driver = :selenium
 RSpec.configure do |config|
   config.mock_with :mocha
 end
 
-class TablelessModel < ActiveRecord::Base
-  def self.columns() @columns ||= []; end
+Rails.backtrace_cleaner.remove_silencers!
 
-  def self.column(name, sql_type = nil, default = nil, null = true)
-    columns << ActiveRecord::ConnectionAdapters::Column.new(name.to_s, default, sql_type.to_s, null)
-  end
-
-  def self.quoted_table_name
-    name.pluralize.underscore
-  end
-
-  def quoted_id
-    "0"
-  end
-end
-
-class Project < TablelessModel
-  column :name, :string
-  has_many :tasks
-  accepts_nested_attributes_for :tasks
-end
-
-class Task < TablelessModel
-  column :project_id, :integer
-  column :name, :string
-  belongs_to :project
-end
-
-class Milestone < TablelessModel
-  column :task_id, :integer
-  column :name, :string
-  belongs_to :task
-end
+# Load support files
+Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
